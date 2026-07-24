@@ -1,0 +1,1109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Click2Check — Verification Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+  rel="stylesheet"
+/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root {
+    --brand: #e61758;
+    --brand-ink: #a30f3f;
+    --teal: #3cb89a;
+    --teal-ink: #1f7a63;
+    --ink: #1c1b1f;
+    --muted: #7b7b7b;
+    --bg: #f3f4f6;
+    --surface: #ffffff;
+    --border: #dfe1e6;
+    --border-strong: #c7cad1;
+    --font-display: "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.46153846;
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(circle at 1px 1px, rgba(28,27,31,0.045) 1px, transparent 0);
+    background-size: 22px 22px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  button { font-family: inherit; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 26px 40px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { font-family: var(--font-display); font-weight: 600; font-size: 22px; }
+  .logo span { color: var(--brand); }
+  .header-tag { font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: 0.03em; }
+
+  main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 56px 24px;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 20px;
+  }
+
+  .card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 40px 44px;
+    max-width: 620px;
+    width: 100%;
+    box-shadow: 0 1px 2px rgba(28,27,31,0.04);
+  }
+  .card.wide { max-width: 680px; padding: 44px 48px; }
+  .card.centered { text-align: center; padding: 44px; }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--brand);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .eyebrow.muted { color: var(--muted); }
+
+  h1.title {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 30px;
+    line-height: 1.15;
+    margin: 0 0 10px;
+    color: var(--ink);
+  }
+  .card.wide h1.title { font-size: 28px; color: var(--brand); margin-bottom: 6px; }
+
+  .subtitle { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0 0 30px; max-width: 480px; }
+  .card.wide .subtitle { font-size: 13px; margin-bottom: 30px; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 16px; margin-bottom: 32px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.span2 { grid-column: span 2; }
+  .field label { font-size: 12px; font-weight: 600; color: var(--ink); }
+  .field input, .field select {
+    font: inherit; font-size: 14px; padding: 10px 12px;
+    border-radius: 3px; border: 1px solid var(--border-strong);
+    background: #fff; color: var(--ink);
+  }
+
+  .btn-primary {
+    width: 100%; padding: 14px 20px; background: var(--brand); color: #fff;
+    border: none; border-radius: 3px; font-size: 15px; font-weight: 600;
+  }
+  .btn-primary:hover { background: var(--brand-ink); }
+
+  .actions { display: flex; gap: 12px; }
+  .actions .btn-primary { flex: 1; padding: 13px 20px; font-size: 14px; }
+  .btn-secondary {
+    padding: 13px 20px; background: transparent; color: var(--ink);
+    border: 1px solid var(--border-strong); border-radius: 3px; font-size: 14px; font-weight: 600;
+  }
+
+  .spinner-row { display: flex; align-items: center; justify-content: center; gap: 14px; }
+  .spinner {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2.5px solid var(--border); border-top-color: var(--brand);
+    animation: spin 0.8s linear infinite; display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  h2.processing-title { font-family: var(--font-display); font-weight: 500; font-size: 22px; margin: 0; color: var(--ink); }
+
+  .stamp-wrap { position: absolute; top: 26px; right: 32px; pointer-events: none; }
+  .stamp {
+    border: 3px solid var(--teal); border-radius: 50%; width: 118px; height: 118px;
+    display: flex; align-items: center; justify-content: center;
+    transform: rotate(-11deg); background: rgba(60,184,154,0.06);
+    animation: stampIn 0.4s cubic-bezier(0.2,0.8,0.2,1) both;
+  }
+  .stamp span {
+    font-family: var(--font-mono); font-weight: 700; font-size: 12.5px;
+    letter-spacing: 0.03em; color: var(--teal-ink); text-align: center; line-height: 1.3;
+  }
+  @keyframes stampIn {
+    0% { transform: rotate(-11deg) scale(2.2); opacity: 0; }
+    60% { opacity: 1; }
+    100% { transform: rotate(-11deg) scale(1); opacity: 1; }
+  }
+
+  .section { margin-bottom: 26px; }
+  .section h2 {
+    font-family: var(--font-display); font-size: 16px; font-weight: 500; color: var(--brand);
+    margin: 0 0 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px;
+  }
+  .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f2; font-size: 13.5px; }
+  .row .label { color: var(--muted); }
+  .row .value { font-weight: 500; color: var(--ink); }
+  .row .value.mono { font-family: var(--font-mono); }
+
+  .employer { font-size: 14px; font-weight: 600; margin: 0 0 12px; color: var(--ink); }
+  .status-badge {
+    font-family: var(--font-mono); font-size: 10.5px; background: rgba(60,184,154,0.12);
+    color: var(--teal-ink); padding: 3px 8px; border-radius: 20px; margin-left: 8px; font-weight: 600;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 10px; background: var(--bg); font-weight: 600; font-size: 12px; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 10px; border-bottom: 1px solid #f0f0f2; color: var(--ink); }
+
+  .disclaimer { font-size: 11px; color: var(--muted); font-style: italic; margin: 8px 0 28px; line-height: 1.5; }
+  .section-note { font-size: 11.5px; color: var(--muted); font-style: italic; margin: -6px 0 10px; }
+  .employer-note { font-size: 11px; color: var(--muted); font-style: italic; margin: 8px 0 4px; line-height: 1.5; }
+
+  .payments-detail { margin: 12px 0 24px; }
+  .payments-detail summary {
+    cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--brand);
+    padding: 8px 0; list-style: none;
+  }
+  .payments-detail summary::-webkit-details-marker { display: none; }
+  .payments-detail summary::before { content: "▸ "; }
+  .payments-detail[open] summary::before { content: "▾ "; }
+  .detail-block { border: 1px solid var(--border); border-radius: 4px; padding: 12px 14px; margin-bottom: 8px; background: var(--bg); }
+  .detail-block-header { font-size: 12px; font-weight: 600; color: var(--ink); margin-bottom: 8px; }
+  .detail-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .detail-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  .detail-cols ul { margin: 4px 0 0; padding-left: 16px; font-size: 12px; color: var(--ink); }
+  .detail-cols li { margin-bottom: 2px; }
+
+  body { flex-direction: column; }
+
+  .app-header {
+    display: flex; align-items: center;
+    border-bottom: 1px solid var(--border); background: var(--surface);
+    height: 92px; flex-shrink: 0;
+  }
+  .app-header .header-logo {
+    width: 300px; flex-shrink: 0; padding: 0 32px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .app-header .header-logo .logo-img { display: block; height: 30px; width: 120px; object-fit: contain; object-position: left center; }
+  .app-header .header-logo .logo-sub { font-family: var(--font-body); font-size: 9px; font-weight: 500; letter-spacing: 0.12em; color: var(--muted); margin-top: 4px; }
+
+  .app-header h1 { flex: 1; font-family: var(--font-display); font-weight: 400; font-size: 26px; color: var(--brand); margin: 0; padding-left: 10px; }
+  .app-header .welcome { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 10px; padding-right: 40px; white-space: nowrap; }
+
+  .body-row { display: flex; flex: 1; min-height: 0; }
+
+  .sidebar {
+    width: 300px;
+    flex-shrink: 0;
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 0;
+  }
+
+  .sidebar-nav { display: flex; flex-direction: column; gap: 4px; padding: 0 24px; }
+  .sidebar-link {
+    display: flex; align-items: center; gap: 16px;
+    padding: 15px 18px; border-radius: 4px; border: none; background: none;
+    font-size: 17px; font-weight: 400; color: var(--muted); text-align: left; width: 100%;
+
+  }
+  .sidebar-link:hover { background: var(--surface); }
+  .sidebar-link.active { background: var(--brand); color: #fff; font-weight: 500; }
+  .sidebar-link .icon { width: 20px; height: 20px; flex-shrink: 0; }
+
+  .content-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+  main { padding: 40px 32px; align-items: flex-start; }
+
+  .hidden { display: none !important; }
+
+  .portal-card { max-width: 860px; width: 100%; }
+  .portal-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
+  .portal-header h1 { margin: 0 0 4px; }
+  .portal-header .subtitle { margin: 0; }
+
+  .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 30px; }
+  .stat-box { border: 1px solid var(--border); border-radius: 4px; padding: 18px 20px; background: var(--bg); }
+  .stat-box .stat-value { font-family: var(--font-display); font-size: 30px; font-weight: 500; color: var(--ink); }
+  .stat-box .stat-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+  .stat-box.brand .stat-value { color: var(--brand); }
+  .stat-box.teal .stat-value { color: var(--teal-ink); }
+
+  .case-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .case-table th { text-align: left; padding: 10px 14px; background: var(--bg); font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .case-table td { padding: 12px 14px; border-bottom: 1px solid #f0f0f2; color: var(--ink); }
+  .case-table tbody tr { cursor: pointer; }
+  .case-table tbody tr:hover { background: var(--bg); }
+  .case-table .mono { font-family: var(--font-mono); font-size: 12px; }
+  .cat-pill {
+    font-family: var(--font-mono); font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .cat-pill.residential { background: rgba(60,184,154,0.12); color: var(--teal-ink); }
+  .cat-pill.commercial { background: rgba(230,23,88,0.1); color: var(--brand-ink); }
+
+  .back-link { background: none; border: none; color: var(--muted); font-size: 13px; font-weight: 600; padding: 0; margin-bottom: 18px; display: inline-flex; align-items: center; gap: 6px; }
+  .back-link:hover { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="header-logo">
+    <img src="logo.png" alt="Click2Check" class="logo-img" width="120" height="30" onerror="this.style.display='none'" />
+    <div class="logo-sub">CLICK2CHECK</div>
+  </div>
+  <h1 id="page-title">ABC Ltd cases</h1>
+  <div class="welcome">
+    Welcome, ABC Ltd
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c1.5-4 5-6 7.5-6s6 2 7.5 6"/></svg>
+  </div>
+</div>
+
+<div class="body-row">
+
+<div class="sidebar">
+  <nav class="sidebar-nav">
+    <button class="sidebar-link active" data-view="portal">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></svg>
+      ABC Ltd cases
+    </button>
+    <button class="sidebar-link" data-view="new-case">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>
+      New case
+    </button>
+  </nav>
+</div>
+
+<div class="content-area">
+
+<main>
+
+  <!-- STEP 1: FORM -->
+  <form id="order-form" class="card hidden">
+    <div class="eyebrow">New case &nbsp;·&nbsp; 001</div>
+    <h1 class="title">Open a verification request</h1>
+    <p class="subtitle">Enter the applicant's details below. This is a demo using mock data — no real verification lookup is made.</p>
+
+    <div class="grid">
+      <div class="field">
+        <label>First name</label>
+        <input id="firstName" required />
+      </div>
+      <div class="field">
+        <label>Last name</label>
+        <input id="lastName" required />
+      </div>
+      <div class="field">
+        <label>Date of birth</label>
+        <input id="dob" type="date" required />
+      </div>
+      <div class="field">
+        <label>Postal code</label>
+        <input id="postalCode" required />
+      </div>
+      <div class="field span2">
+        <label>Address line 1</label>
+        <input id="addressLine1" required />
+      </div>
+      <div class="field">
+        <label>Query category</label>
+        <select id="queryCategory">
+          <option value="RESIDENTIAL">Residential</option>
+          <option value="COMMERCIAL">Commercial</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Verification type</label>
+        <select id="verificationType">
+          <option value="VOI">Verification of income</option>
+          <option value="VOE">Verification of employment</option>
+        </select>
+      </div>
+      <div class="field span2">
+        <label>Permissible purpose</label>
+        <select id="identifyingPurpose">
+          <option value="MO">Application for mortgage</option>
+          <option value="CC">Application for credit</option>
+          <option value="ES">Pre-employment screening</option>
+          <option value="TS">Pre-tenancy screening</option>
+        </select>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-primary">Submit for verification</button>
+  </form>
+
+  <!-- STEP 2: PROCESSING -->
+  <div id="processing-view" class="card centered hidden">
+    <div class="eyebrow muted" id="processing-case-id"></div>
+    <div class="spinner-row">
+      <span class="spinner"></span>
+      <h2 class="processing-title">Querying HMRC records…</h2>
+    </div>
+    <p class="subtitle" style="margin:14px auto 0; text-align:center;">Matching applicant details against payroll data. This usually takes a few seconds.</p>
+  </div>
+
+  <!-- STEP 2b: PENDING (commercial cases stop here) -->
+  <div id="pending-view" class="card centered hidden">
+    <div class="eyebrow muted" id="pending-case-id"></div>
+    <h2 class="processing-title">Case submitted -- pending review</h2>
+    <p class="subtitle" style="margin:14px auto 0; text-align:center; max-width:420px;">Commercial verification cases are reviewed manually and won't show a report immediately. You can check back on this case from the ABC Ltd cases list.</p>
+    <div class="actions" style="justify-content:center; margin-top:22px;">
+      <button class="btn-secondary" id="pending-new-case-btn">Start a new case</button>
+      <button class="btn-primary" id="pending-view-cases-btn" style="flex:none;">View ABC Ltd cases</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: RESULT -->
+  <div id="result-view" class="card wide hidden">
+    <div class="stamp-wrap">
+      <div class="stamp"><span>MATCH<br/>FOUND</span></div>
+    </div>
+
+    <div class="eyebrow muted" id="result-case-id"></div>
+    <h1 class="title">Employment Income Verification</h1>
+
+    <div class="section">
+      <h2>Order Information</h2>
+      <div class="row"><span class="label">Report Date</span><span class="value" id="r-report-date"></span></div>
+      <div class="row"><span class="label">Permissible Purpose</span><span class="value" id="r-purpose"></span></div>
+      <div class="row"><span class="label">Tracking Number</span><span class="value mono" id="r-tracking"></span></div>
+      <div class="row"><span class="label">Customer Reference Number</span><span class="value" id="r-refnum">-</span></div>
+    </div>
+
+    <div class="section">
+      <h2>Collected Personal Information</h2>
+      <p class="section-note">The following personal information was collected as part of the order request</p>
+      <div class="row"><span class="label">Name</span><span class="value" id="r-name"></span></div>
+      <div class="row"><span class="label">Date of Birth</span><span class="value" id="r-dob"></span></div>
+      <div class="row"><span class="label">Address</span><span class="value" id="r-address"></span></div>
+      <div class="row"><span class="label">Current Employment -- Employer Name</span><span class="value">-</span></div>
+      <div class="row"><span class="label">Current Employment -- Work Email</span><span class="value">-</span></div>
+      <div class="row"><span class="label">Current Employment -- Work Phone Number</span><span class="value">-</span></div>
+    </div>
+
+    <div class="section">
+      <h2>Retrieved Personal Information</h2>
+      <div class="row"><span class="label">Name</span><span class="value" id="r-retrieved-name"></span></div>
+      <div class="row"><span class="label">Address</span><span class="value" id="r-retrieved-address"></span></div>
+    </div>
+
+    <div class="section">
+      <h2>Payroll HMRC Data</h2>
+      <div id="r-payroll-employers"></div>
+    </div>
+
+    <div class="section">
+      <h2>Self-Employment Income</h2>
+      <div id="r-self-employment"></div>
+    </div>
+
+    <div class="section">
+      <h2>Other Sources of Income</h2>
+      <div id="r-other-income"></div>
+    </div>
+
+    <div class="section">
+      <h2>Taxes Paid</h2>
+      <div id="r-taxes-paid"></div>
+    </div>
+
+    <p class="disclaimer">This report was generated from verified payroll data records. Figures reflect the most recent data available at the time of the request. (Demo report -- mock data only.)</p>
+
+    <div class="actions">
+      <button class="btn-primary" id="download-btn">Download PDF</button>
+      <button class="btn-secondary" id="new-case-btn">Start a new case</button>
+    </div>
+  </div>
+
+  <!-- CLIENT PORTAL: case list -->
+  <div id="portal-view" class="card portal-card">
+    <div class="portal-header">
+      <div>
+        <div class="eyebrow muted">Client portal</div>
+        <h1 class="title" style="font-size:26px;">ABC Ltd</h1>
+        <p class="subtitle">Every verification case opened by this account.</p>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-box brand">
+        <div class="stat-value" id="stat-total"></div>
+        <div class="stat-label">Total cases</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="stat-commercial"></div>
+        <div class="stat-label">Commercial</div>
+      </div>
+      <div class="stat-box teal">
+        <div class="stat-value" id="stat-residential"></div>
+        <div class="stat-label">Residential</div>
+      </div>
+    </div>
+
+    <table class="case-table">
+      <thead>
+        <tr><th>Applicant</th><th>Category</th><th>Status</th><th>Tracking Number</th><th>Opened</th></tr>
+      </thead>
+      <tbody id="portal-case-list"></tbody>
+    </table>
+  </div>
+
+  <!-- CLIENT PORTAL: single case detail (reuses the report layout) -->
+  <div id="portal-detail-view" class="card wide hidden">
+    <button class="back-link" id="portal-back-btn">&larr; Back to ABC Ltd cases</button>
+
+    <div class="eyebrow muted" id="pd-case-id"></div>
+    <h1 class="title">Employment Income Verification</h1>
+
+    <div class="section">
+      <h2>Order Information</h2>
+      <div class="row"><span class="label">Report Date</span><span class="value" id="pd-report-date"></span></div>
+      <div class="row"><span class="label">Permissible Purpose</span><span class="value" id="pd-purpose"></span></div>
+      <div class="row"><span class="label">Tracking Number</span><span class="value mono" id="pd-tracking"></span></div>
+      <div class="row"><span class="label">Customer Reference Number</span><span class="value">-</span></div>
+    </div>
+
+    <div class="section">
+      <h2>Collected Personal Information</h2>
+      <p class="section-note">The following personal information was collected as part of the order request</p>
+      <div class="row"><span class="label">Name</span><span class="value" id="pd-name"></span></div>
+      <div class="row"><span class="label">Date of Birth</span><span class="value" id="pd-dob"></span></div>
+      <div class="row"><span class="label">Address</span><span class="value" id="pd-address"></span></div>
+      <div class="row"><span class="label">Current Employment -- Employer Name</span><span class="value">-</span></div>
+      <div class="row"><span class="label">Current Employment -- Work Email</span><span class="value">-</span></div>
+      <div class="row"><span class="label">Current Employment -- Work Phone Number</span><span class="value">-</span></div>
+    </div>
+
+    <div class="section">
+      <h2>Retrieved Personal Information</h2>
+      <div class="row"><span class="label">Name</span><span class="value" id="pd-retrieved-name"></span></div>
+      <div class="row"><span class="label">Address</span><span class="value" id="pd-retrieved-address"></span></div>
+    </div>
+
+    <div class="section">
+      <h2>Payroll HMRC Data</h2>
+      <div id="pd-payroll-employers"></div>
+    </div>
+
+    <div class="section">
+      <h2>Self-Employment Income</h2>
+      <div id="pd-self-employment"></div>
+    </div>
+
+    <div class="section">
+      <h2>Other Sources of Income</h2>
+      <div id="pd-other-income"></div>
+    </div>
+
+    <div class="section">
+      <h2>Taxes Paid</h2>
+      <div id="pd-taxes-paid"></div>
+    </div>
+
+    <p class="disclaimer">This report was generated from verified payroll data records. Figures reflect the most recent data available at the time of the request. (Demo report -- mock data only.)</p>
+
+    <div class="actions">
+      <button class="btn-primary" id="pd-download-btn">Download PDF</button>
+    </div>
+  </div>
+
+</main>
+
+<footer>Click2Check — this is a review demo. No real verification calls are made.</footer>
+
+</div>
+</div>
+
+<script>
+  // ---------- Mock "backend" -- replace with real fetch() calls when ready ----------
+  function randomId() {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0;
+      const v = c === "x" ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+  function randomTransactionNumber() {
+    const chars = "0123456789abcdef";
+    return Array.from({ length: 24 }, () => chars[Math.floor(Math.random() * 16)]).join("");
+  }
+  const PURPOSE_LABELS = {
+    MO: "Application for mortgage",
+    CC: "Application for credit",
+    ES: "Pre-employment screening",
+    TS: "Pre-tenancy screening",
+  };
+
+  // Fixed test data, copied verbatim from a real sample verification report --
+  // no formulas, no randomization. Every case uses this same information,
+  // same as how a sandbox/test environment typically returns one fixed
+  // test record regardless of what was submitted.
+  const FIXED_EMPLOYERS = [
+    {
+      employerName: "Test1 Ltd",
+      firstPayDate: "27-01-2023", lastPayDate: "27-09-2024",
+      annual: [
+        { period: "2024-25", taxableIncome: 19922.22, taxDeduction: 2726.40, niDeduction: 1057.98 },
+        { period: "2023-24", taxableIncome: 38156.88, taxDeduction: 5115.40, niDeduction: 2786.77 },
+        { period: "2022-23", taxableIncome: 7946.88, taxDeduction: 1170.00, niDeduction: 576.34 },
+      ],
+      payPeriod: [
+        { payDate: "27-09-2024", taxableIncome: 3320.37, taxDeduction: 454.40, niDeduction: 176.33 },
+        { payDate: "28-08-2024", taxableIncome: 3320.37, taxDeduction: 454.40, niDeduction: 176.33 },
+        { payDate: "26-07-2024", taxableIncome: 3320.37, taxDeduction: 454.40, niDeduction: 176.33 },
+        { payDate: "28-06-2024", taxableIncome: 3320.37, taxDeduction: 454.40, niDeduction: 176.33 },
+        { payDate: "28-05-2024", taxableIncome: 3320.37, taxDeduction: 454.40, niDeduction: 176.33 },
+        { payDate: "26-04-2024", taxableIncome: 3320.37, taxDeduction: 454.40, niDeduction: 176.33 },
+        { payDate: "28-03-2024", taxableIncome: 3178.11, taxDeduction: 426.00, niDeduction: 206.41 },
+        { payDate: "28-02-2024", taxableIncome: 3178.11, taxDeduction: 425.80, niDeduction: 206.41 },
+        { payDate: "26-01-2024", taxableIncome: 3178.11, taxDeduction: 426.00, niDeduction: 206.41 },
+        { payDate: "28-12-2023", taxableIncome: 3178.11, taxDeduction: 426.00, niDeduction: 247.69 },
+        { payDate: "28-11-2023", taxableIncome: 3178.11, taxDeduction: 426.00, niDeduction: 247.69 },
+        { payDate: "27-10-2023", taxableIncome: 2895.19, taxDeduction: 369.40, niDeduction: 213.74 },
+      ],
+    },
+    {
+      employerName: "Test2 Ltd",
+      firstPayDate: "21-01-2021", lastPayDate: "11-02-2022",
+      annual: [
+        { period: "2022-23", taxableIncome: 15924.78, taxDeduction: 726.40, niDeduction: 157.98 },
+        { period: "2021-22", taxableIncome: 28676.88, taxDeduction: 3785.40, niDeduction: 1296.77 },
+      ],
+      payPeriod: [],
+    },
+    {
+      employerName: "Test3 Ltd",
+      firstPayDate: "27-01-2019", lastPayDate: "11-12-2020",
+      annual: [
+        { period: "2020-21", taxableIncome: 39544.08, taxDeduction: 6426.40, niDeduction: 2987.98 },
+      ],
+      payPeriod: [],
+    },
+  ];
+
+  const FIXED_SELF_EMPLOYMENT = [
+    { year: "2022-23", business: "Test4 Ltd", turnover: 28503.00, expenses: null, carriedForwardLosses: null, resultingProfitOrLoss: 28503.00 },
+    { year: "2021-22", business: "Test5 Ltd", turnover: 31925.00, expenses: null, carriedForwardLosses: null, resultingProfitOrLoss: 31925.00 },
+  ];
+
+  const FIXED_OTHER_INCOME = [
+    { year: "2022-23", statePension: 1567.90, otherPensionable: 1782.54, otherIncome: 2503.00 },
+    { year: "2021-22", statePension: 1456.00, otherPensionable: 1873.64, otherIncome: 3925.00 },
+    { year: "2020-21", statePension: 1427.89, otherPensionable: 1898.23, otherIncome: 5365.00 },
+  ];
+
+  const FIXED_TAXES_PAID = [
+    { year: "2022-23", totalTax: 7525.80, totalNI: 6772.28 },
+    { year: "2021-22", totalTax: 6589.56, totalNI: 5321.64 },
+    { year: "2020-21", totalTax: 7145.00, totalNI: 6673.00 },
+  ];
+
+  // No calculation here -- just the fixed data above, plus the retrieved
+  // name/address enrichment pattern the real sample shows (middle initial
+  // and "Apartment" prefix added by the verification, same as the sample).
+  function buildMockReport(payload) {
+    return {
+      employers: FIXED_EMPLOYERS,
+      selfEmployment: FIXED_SELF_EMPLOYMENT,
+      otherIncome: FIXED_OTHER_INCOME,
+      taxesPaid: FIXED_TAXES_PAID,
+      retrievedName: payload.firstName + " L " + payload.lastName,
+      retrievedAddress: "Apartment " + payload.addressLine1 + ", " + payload.postalCode,
+    };
+  }
+
+  function simulateCreateOrder(payload) {
+    return new Promise(resolve => {
+      setTimeout(() => resolve({
+        id: randomId(),
+        transactionNumber: randomTransactionNumber(),
+        createdAt: new Date().toISOString(),
+        status: "PENDING",
+        payload,
+      }), 350);
+    });
+  }
+  function simulateGetResult(order) {
+    return new Promise(resolve => {
+      setTimeout(() => resolve({ ...order, status: "DELIVERED", report: buildMockReport(order.payload) }), 1600);
+    });
+  }
+
+  // ---------- PDF generation (real, via jsPDF) ----------
+  function downloadReportPdf(order) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const marginX = 48;
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let y = 56;
+    const BRAND = "#e61758", INK = "#1c1b1f", MUTED = "#7b7b7b", BORDER = "#dfe1e6", LIGHT_ROW = "#f3f4f6";
+
+    function ensureSpace(needed) {
+      if (y + needed > pageHeight - 50) {
+        doc.addPage();
+        y = 56;
+      }
+    }
+    function sectionHeading(text) {
+      ensureSpace(30);
+      doc.setTextColor(BRAND); doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+      doc.text(text, marginX, y);
+      y += 10;
+    }
+
+    doc.setFont("helvetica", "bold"); doc.setFontSize(20); doc.setTextColor(BRAND);
+    doc.text("Employment Income Verification", marginX, y);
+    y += 28;
+
+    const purposeLabel = PURPOSE_LABELS[order.payload.identifyingPurpose] || order.payload.identifyingPurpose;
+
+    sectionHeading("Order Information");
+    doc.autoTable({
+      startY: y, theme: "grid",
+      styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: BORDER },
+      margin: { left: marginX, right: marginX },
+      body: [
+        ["Report Date", new Date(order.createdAt).toLocaleString("en-GB")],
+        ["Permissible Purpose", purposeLabel],
+        ["Tracking Number", order.transactionNumber],
+        ["Customer Reference Number", "-"],
+      ],
+    });
+    y = doc.lastAutoTable.finalY + 22;
+
+    sectionHeading("Collected Personal Information");
+    doc.setFont("helvetica", "italic"); doc.setFontSize(8.5); doc.setTextColor(MUTED);
+    doc.text("The following personal information was collected as part of the order request", marginX, y);
+    y += 8;
+    doc.autoTable({
+      startY: y, theme: "grid",
+      styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: BORDER },
+      margin: { left: marginX, right: marginX },
+      body: [
+        ["Name", order.payload.firstName + " " + order.payload.lastName],
+        ["Date of Birth", new Date(order.payload.dob).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })],
+        ["Address", order.payload.addressLine1 + ", " + order.payload.postalCode],
+        ["Current Employment -- Employer Name", "-"],
+        ["Current Employment -- Work Email", "-"],
+        ["Current Employment -- Work Phone Number", "-"],
+      ],
+    });
+    y = doc.lastAutoTable.finalY + 22;
+
+    sectionHeading("Retrieved Personal Information");
+    doc.autoTable({
+      startY: y, theme: "grid",
+      styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: BORDER },
+      margin: { left: marginX, right: marginX },
+      body: [
+        ["Name", order.report.retrievedName],
+        ["Address", order.report.retrievedAddress],
+      ],
+    });
+    y = doc.lastAutoTable.finalY + 22;
+
+    sectionHeading("Payroll HMRC Data");
+
+    order.report.employers.forEach(entry => {
+      ensureSpace(40);
+      doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(INK);
+      doc.text(entry.employerName + "  First Pay Date: " + entry.firstPayDate + "  Last Pay Date: " + entry.lastPayDate, marginX, y);
+      y += 10;
+
+      doc.autoTable({
+        startY: y, theme: "grid",
+        head: [["Start Date/End Date", "Total Taxable Income", "Total Tax Deduction", "Total National Insurance Deduction"]],
+        body: entry.annual.map(a => [a.period, "£" + a.taxableIncome.toLocaleString(), "£" + a.taxDeduction.toLocaleString(), "£" + a.niDeduction.toLocaleString()]),
+        styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: BORDER },
+        headStyles: { fillColor: LIGHT_ROW, textColor: INK, fontStyle: "bold" },
+        margin: { left: marginX, right: marginX },
+      });
+      y = doc.lastAutoTable.finalY + 12;
+
+      if (entry.payPeriod.length) {
+        doc.autoTable({
+          startY: y, theme: "grid",
+          head: [["Pay Date", "Taxable Income", "Tax Deduction", "National Insurance Deduction"]],
+          body: entry.payPeriod.map(p => [p.payDate, "£" + p.taxableIncome.toLocaleString(), "£" + p.taxDeduction.toLocaleString(), "£" + p.niDeduction.toLocaleString()]),
+          styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: BORDER },
+          headStyles: { fillColor: LIGHT_ROW, textColor: INK, fontStyle: "bold" },
+          margin: { left: marginX, right: marginX },
+        });
+        y = doc.lastAutoTable.finalY + 10;
+      }
+
+      doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(MUTED);
+      doc.text(
+        "Note: The date of payment as it was reported to HMRC. Taxable income is defined as gross income less any\npre-tax deductions. The First and Last Pay Date is an indication of time with the employer.",
+        marginX, y
+      );
+      y += 26;
+    });
+
+    ensureSpace(60);
+    sectionHeading("Self-Employment Income");
+    doc.autoTable({
+      startY: y, theme: "grid",
+      head: [["Year", "Business Name", "Turnover", "Resulting Profit or Loss"]],
+      body: order.report.selfEmployment.map(s => [s.year, s.business, "£" + s.turnover.toLocaleString(), "£" + s.resultingProfitOrLoss.toLocaleString()]),
+      styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: BORDER },
+      headStyles: { fillColor: LIGHT_ROW, textColor: INK, fontStyle: "bold" },
+      margin: { left: marginX, right: marginX },
+    });
+    y = doc.lastAutoTable.finalY + 22;
+
+    ensureSpace(60);
+    sectionHeading("Other Sources of Income");
+    doc.autoTable({
+      startY: y, theme: "grid",
+      head: [["Year", "State Pension", "Other Pensionable Income", "Other Income"]],
+      body: order.report.otherIncome.map(o => [o.year, "£" + o.statePension.toLocaleString(), "£" + o.otherPensionable.toLocaleString(), "£" + o.otherIncome.toLocaleString()]),
+      styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: BORDER },
+      headStyles: { fillColor: LIGHT_ROW, textColor: INK, fontStyle: "bold" },
+      margin: { left: marginX, right: marginX },
+    });
+    y = doc.lastAutoTable.finalY + 22;
+
+    ensureSpace(60);
+    sectionHeading("Taxes Paid");
+    doc.autoTable({
+      startY: y, theme: "grid",
+      head: [["Year", "Total Annual Tax Deduction", "Total Annual National Insurance Deduction"]],
+      body: order.report.taxesPaid.map(t => [t.year, "£" + t.totalTax.toLocaleString(), "£" + t.totalNI.toLocaleString()]),
+      styles: { font: "helvetica", fontSize: 9, textColor: INK, lineColor: BORDER },
+      headStyles: { fillColor: LIGHT_ROW, textColor: INK, fontStyle: "bold" },
+      margin: { left: marginX, right: marginX },
+    });
+    y = doc.lastAutoTable.finalY + 22;
+
+    ensureSpace(30);
+    doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(MUTED);
+    doc.text(
+      "This report was generated from verified payroll data records. Figures reflect the most\nrecent data available at the time of the request. (Demo report -- mock data only.)",
+      marginX, y
+    );
+
+    doc.save("click2check-demo-report-" + order.transactionNumber.slice(0, 8) + ".pdf");
+  }
+
+  // ---------- Flow wiring ----------
+  const formView = document.getElementById("order-form");
+  const processingView = document.getElementById("processing-view");
+  const pendingView = document.getElementById("pending-view");
+  const resultView = document.getElementById("result-view");
+
+  let currentOrder = null;
+
+  formView.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const payload = {
+      firstName: document.getElementById("firstName").value,
+      lastName: document.getElementById("lastName").value,
+      dob: document.getElementById("dob").value,
+      addressLine1: document.getElementById("addressLine1").value,
+      postalCode: document.getElementById("postalCode").value,
+      queryCategory: document.getElementById("queryCategory").value,
+      verificationType: document.getElementById("verificationType").value,
+      identifyingPurpose: document.getElementById("identifyingPurpose").value,
+    };
+
+    formView.classList.add("hidden");
+    processingView.classList.remove("hidden");
+
+    const created = await simulateCreateOrder(payload);
+    currentOrder = created;
+    document.getElementById("processing-case-id").textContent = "Case · " + created.transactionNumber.slice(0, 8);
+
+    // Business rule: commercial cases stay pending -- not yet supported
+    // end-to-end, so they never reach a delivered report in this demo.
+    if (payload.queryCategory === "COMMERCIAL") {
+      await new Promise(r => setTimeout(r, 900));
+      currentOrder = { ...created, status: "PENDING" };
+      addCaseToPortal(currentOrder);
+      document.getElementById("pending-case-id").textContent = "Case · " + created.transactionNumber.slice(0, 8);
+      processingView.classList.add("hidden");
+      pendingView.classList.remove("hidden");
+      return;
+    }
+
+    const delivered = await simulateGetResult(created);
+    currentOrder = delivered;
+    addCaseToPortal(delivered);
+    renderResult(delivered);
+
+    processingView.classList.add("hidden");
+    resultView.classList.remove("hidden");
+  });
+
+  function renderPayrollEmployersHtml(report) {
+    return report.employers.map(entry => `
+      <p class="employer">${entry.employerName}
+        <span class="status-badge">First: ${entry.firstPayDate} · Last: ${entry.lastPayDate}</span>
+      </p>
+      <table>
+        <thead><tr><th>Start Date/End Date</th><th>Total Taxable Income</th><th>Total Tax Deduction</th><th>Total National Insurance Deduction</th></tr></thead>
+        <tbody>${entry.annual.map(a =>
+          `<tr><td>${a.period}</td><td>£${a.taxableIncome.toLocaleString()}</td><td>£${a.taxDeduction.toLocaleString()}</td><td>£${a.niDeduction.toLocaleString()}</td></tr>`
+        ).join("")}</tbody>
+      </table>
+      ${entry.payPeriod.length ? `
+      <table style="margin-top:14px">
+        <thead><tr><th>Pay Date</th><th>Taxable Income</th><th>Tax Deduction</th><th>National Insurance Deduction</th></tr></thead>
+        <tbody>${entry.payPeriod.map(p =>
+          `<tr><td>${p.payDate}</td><td>£${p.taxableIncome.toLocaleString()}</td><td>£${p.taxDeduction.toLocaleString()}</td><td>£${p.niDeduction.toLocaleString()}</td></tr>`
+        ).join("")}</tbody>
+      </table>` : ""}
+      <p class="employer-note">Note: The date of payment as it was reported to HMRC. Taxable Income is defined as Gross Income less any pre-tax deductions. The First and Last Pay Date is an indication of time with the employer.</p>
+    `).join("");
+  }
+
+  function renderSelfEmploymentHtml(items) {
+    return `
+      <table>
+        <thead><tr><th>Year</th><th>Business Name</th><th>Turnover</th><th>Resulting Profit or Loss</th></tr></thead>
+        <tbody>${items.map(s =>
+          `<tr><td>${s.year}</td><td>${s.business}</td><td>£${s.turnover.toLocaleString()}</td><td>£${s.resultingProfitOrLoss.toLocaleString()}</td></tr>`
+        ).join("")}</tbody>
+      </table>
+    `;
+  }
+
+  function renderOtherIncomeHtml(items) {
+    return `
+      <table>
+        <thead><tr><th>Year</th><th>State Pension</th><th>Other Pensionable Income</th><th>Other Income</th></tr></thead>
+        <tbody>${items.map(o =>
+          `<tr><td>${o.year}</td><td>£${o.statePension.toLocaleString()}</td><td>£${o.otherPensionable.toLocaleString()}</td><td>£${o.otherIncome.toLocaleString()}</td></tr>`
+        ).join("")}</tbody>
+      </table>
+    `;
+  }
+
+  function renderTaxesPaidHtml(items) {
+    return `
+      <table>
+        <thead><tr><th>Year</th><th>Total Annual Tax Deduction</th><th>Total Annual National Insurance Deduction</th></tr></thead>
+        <tbody>${items.map(t =>
+          `<tr><td>${t.year}</td><td>£${t.totalTax.toLocaleString()}</td><td>£${t.totalNI.toLocaleString()}</td></tr>`
+        ).join("")}</tbody>
+      </table>
+    `;
+  }
+
+  function renderResult(order) {
+    const { payload, report } = order;
+    document.getElementById("result-case-id").textContent = "Case · " + order.transactionNumber.slice(0, 8);
+    document.getElementById("r-report-date").textContent = new Date(order.createdAt).toLocaleString("en-GB");
+    document.getElementById("r-purpose").textContent = PURPOSE_LABELS[payload.identifyingPurpose] || payload.identifyingPurpose;
+    document.getElementById("r-tracking").textContent = order.transactionNumber;
+    document.getElementById("r-name").textContent = payload.firstName + " " + payload.lastName;
+    document.getElementById("r-dob").textContent = new Date(payload.dob).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    document.getElementById("r-address").textContent = payload.addressLine1 + ", " + payload.postalCode;
+    document.getElementById("r-retrieved-name").textContent = report.retrievedName;
+    document.getElementById("r-retrieved-address").textContent = report.retrievedAddress;
+
+    document.getElementById("r-payroll-employers").innerHTML = renderPayrollEmployersHtml(report);
+    document.getElementById("r-self-employment").innerHTML = renderSelfEmploymentHtml(report.selfEmployment);
+    document.getElementById("r-other-income").innerHTML = renderOtherIncomeHtml(report.otherIncome);
+    document.getElementById("r-taxes-paid").innerHTML = renderTaxesPaidHtml(report.taxesPaid);
+  }
+
+  document.getElementById("download-btn").addEventListener("click", () => {
+    if (currentOrder) downloadReportPdf(currentOrder);
+  });
+
+  document.getElementById("new-case-btn").addEventListener("click", () => {
+    formView.reset();
+    currentOrder = null;
+    showView("new-case");
+  });
+
+  document.getElementById("pending-new-case-btn").addEventListener("click", () => {
+    formView.reset();
+    currentOrder = null;
+    showView("new-case");
+  });
+  document.getElementById("pending-view-cases-btn").addEventListener("click", () => {
+    showView("portal");
+  });
+
+  // ---------- Client portal (ABC Ltd) ----------
+  const APPLICANTS = [
+    "Test1 User", "Test2 User", "Test3 User", "Test4 User", "Test5 User",
+    "Test6 User", "Test7 User", "Test8 User",
+  ];
+  const STATUSES = ["DELIVERED", "DELIVERED", "DELIVERED", "AWAITING_CONSENT"];
+
+  function buildMockCaseList(count) {
+    const PURPOSES = ["MO", "CC", "ES", "TS"];
+    return Array.from({ length: count }, (_, i) => {
+      const [firstName, lastName] = APPLICANTS[i % APPLICANTS.length].split(" ");
+      const category = i % 3 === 0 ? "COMMERCIAL" : "RESIDENTIAL";
+      // Business rule: commercial cases always show as pending -- not yet supported end-to-end.
+      const status = category === "COMMERCIAL" ? "PENDING" : STATUSES[i % STATUSES.length];
+      const d = new Date();
+      d.setDate(d.getDate() - i * 3 - 1);
+      const payload = {
+        firstName, lastName,
+        dob: "1990-0" + ((i % 9) + 1) + "-14",
+        addressLine1: (12 + i) + " Quayside",
+        postalCode: "NE1 " + (1 + i) + "AQ",
+        queryCategory: category,
+        verificationType: i % 2 === 0 ? "VOI" : "VOE",
+        identifyingPurpose: PURPOSES[i % PURPOSES.length],
+      };
+      const order = {
+        id: randomId(),
+        transactionNumber: randomTransactionNumber(),
+        createdAt: d.toISOString(),
+        payload,
+        status,
+        report: status === "DELIVERED" ? buildMockReport(payload) : null,
+      };
+      return order;
+    });
+  }
+
+  const STORAGE_KEY = "c2c_demo_cases";
+
+  function loadSavedCases() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      console.warn("Could not read saved cases from localStorage:", e);
+      return [];
+    }
+  }
+
+  function saveCasesToStorage() {
+    try {
+      // Only persist cases created through the form (not the base mock
+      // set), identified by the __isSaved flag set when a case is added.
+      const toSave = portalCases.filter(c => c.__isSaved);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    } catch (e) {
+      console.warn("Could not save case to localStorage:", e);
+    }
+  }
+
+  function addCaseToPortal(order) {
+    const saved = { ...order, __isSaved: true };
+    portalCases.unshift(saved);
+    saveCasesToStorage();
+  }
+
+  // Saved cases (from a previous visit) show first, then the built-in demo cases.
+  const portalCases = [...loadSavedCases(), ...buildMockCaseList(8)];
+
+  function renderPortalList() {
+    const total = portalCases.length;
+    const commercial = portalCases.filter(c => c.payload.queryCategory === "COMMERCIAL").length;
+    const residential = total - commercial;
+    document.getElementById("stat-total").textContent = total;
+    document.getElementById("stat-commercial").textContent = commercial;
+    document.getElementById("stat-residential").textContent = residential;
+
+    const tbody = document.getElementById("portal-case-list");
+    tbody.innerHTML = portalCases.map((c, idx) => `
+      <tr data-idx="${idx}">
+        <td>${c.payload.firstName} ${c.payload.lastName}</td>
+        <td><span class="cat-pill ${c.payload.queryCategory.toLowerCase()}">${c.payload.queryCategory}</span></td>
+        <td>${(c.status || "UNKNOWN").replace("_", " ")}</td>
+        <td class="mono">${c.transactionNumber.slice(0, 12)}…</td>
+        <td>${new Date(c.createdAt).toLocaleDateString("en-GB")}</td>
+      </tr>
+    `).join("");
+
+    tbody.querySelectorAll("tr").forEach(tr => {
+      tr.addEventListener("click", () => openCaseDetail(portalCases[tr.dataset.idx]));
+    });
+  }
+
+  function openCaseDetail(order) {
+    if (!order.report) {
+      alert("This case is still " + order.status.replace("_", " ").toLowerCase() + " — no report yet.");
+      return;
+    }
+    const { payload, report } = order;
+    document.getElementById("pd-case-id").textContent = "Case · " + order.transactionNumber.slice(0, 8);
+    document.getElementById("pd-report-date").textContent = new Date(order.createdAt).toLocaleString("en-GB");
+    document.getElementById("pd-purpose").textContent = PURPOSE_LABELS[payload.identifyingPurpose] || payload.identifyingPurpose;
+    document.getElementById("pd-tracking").textContent = order.transactionNumber;
+    document.getElementById("pd-name").textContent = payload.firstName + " " + payload.lastName;
+    document.getElementById("pd-dob").textContent = new Date(payload.dob).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    document.getElementById("pd-address").textContent = payload.addressLine1 + ", " + payload.postalCode;
+    document.getElementById("pd-retrieved-name").textContent = report.retrievedName;
+    document.getElementById("pd-retrieved-address").textContent = report.retrievedAddress;
+
+    document.getElementById("pd-payroll-employers").innerHTML = renderPayrollEmployersHtml(report);
+    document.getElementById("pd-self-employment").innerHTML = renderSelfEmploymentHtml(report.selfEmployment);
+    document.getElementById("pd-other-income").innerHTML = renderOtherIncomeHtml(report.otherIncome);
+    document.getElementById("pd-taxes-paid").innerHTML = renderTaxesPaidHtml(report.taxesPaid);
+
+    document.getElementById("pd-download-btn").onclick = () => downloadReportPdf(order);
+
+    portalView.classList.add("hidden");
+    portalDetailView.classList.remove("hidden");
+    pageTitle.textContent = "Case · " + order.payload.firstName + " " + order.payload.lastName;
+  }
+
+  document.getElementById("portal-back-btn").addEventListener("click", () => {
+    showView("portal");
+  });
+
+  // ---------- Nav switching ----------
+  const portalView = document.getElementById("portal-view");
+  const portalDetailView = document.getElementById("portal-detail-view");
+  const navBtns = document.querySelectorAll(".sidebar-link");
+  const pageTitle = document.getElementById("page-title");
+  const PAGE_TITLES = { "portal": "ABC Ltd cases", "new-case": "New case" };
+
+  function showView(view) {
+    [formView, processingView, pendingView, resultView, portalView, portalDetailView].forEach(v => v.classList.add("hidden"));
+    navBtns.forEach(b => b.classList.toggle("active", b.dataset.view === view));
+    pageTitle.textContent = PAGE_TITLES[view] || "";
+
+    if (view === "new-case") formView.classList.remove("hidden");
+    if (view === "portal") { renderPortalList(); portalView.classList.remove("hidden"); }
+  }
+
+  navBtns.forEach(btn => {
+    btn.addEventListener("click", () => showView(btn.dataset.view));
+  });
+
+  // Portal is the landing view.
+  renderPortalList();
+</script>
+
+</body>
+</html>
